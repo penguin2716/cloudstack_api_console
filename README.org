@@ -1,0 +1,87 @@
+* What's this?
+  This is a pry-based CloudStack API console. If you are familiar with Ruby, you can use this console as usual.
+
+* How to use
+** Installation
+   Just *bundle install* before use and enter your API key, secret key, host URL and api path to *config.rb* as follows.
+
+   : class APIConsole
+   :   @@apiKey = 'cfEgC3nMgIwBEib5_FNLp8n1MBkVKVAsRXcx3oNEI85y6xmRlveGV-zOf61_2ACgXePh8i5NsVLo3Wk6Nr2FiQ'
+   :   @@secretKey = '8yVvaK-8AL-Rnty83MzXkaYqyHB47DcrlIRI6DWk7Hj_Qq71iPEtuMv8QD9gjoG2m1rvMw5Rmbn-KYqTXGGI1w'
+   :   @@baseURL = 'http://10.10.0.2:8080'
+   :   @@apiPath = '/client/api?'
+   : end
+   
+** Basic Examples
+*** See the CloudStack API lists.
+
+    : cloudstack> singleton_methods
+    : => [:dedicatePublicIpRange,
+    :  :releasePublicIpRange,
+    :  :createNetwork,
+    :  :deleteNetwork,
+    :  :listNetworks,
+    : ...
+
+*** Confirm the API parameters and response tags
+
+    : cloudstack> deployVirtualMachine help
+    : => {:request_parameters=>
+    :   [{:name=>"serviceofferingid",
+    :     :description=>"the ID of the service offering for the virtual machine",
+    :     :required=>true},
+    :    {:name=>"templateid",
+    :     :description=>"the ID of the template for the virtual machine",
+    :     :required=>true},
+    : ...
+
+*** Call API with parameters
+
+    : cloudstack> listTemplates :templatefilter => "executable"
+    : => {"count"=>"6",
+    :  "template"=>
+    :   [{"id"=>"26a38908-95d8-419f-9442-0bde58b128ef",
+    :     "name"=>"CentOS 5.5(64-bit) no GUI (KVM)",
+    : ...
+
+*** Error response
+
+    : cloudstack> createNetwork
+    : => {"errorcode"=>"431",
+    :  "errortext"=>
+    :   "Unable to execute API command createnetwork due to missing parameter name"}
+
+** Examples using Ruby expression
+*** Store return values to the variable
+
+    : cloudstack> executable_templates = listTemplates :templatefilter => "executable" 
+    : cloudstack> executable_templates["count"]
+    : => "6"
+    : cloudstack> executable_templates["template"].first["name"]
+    : => "CentOS 5.5(64-bit) no GUI (KVM)"
+
+*** Count running virtualmachines
+
+    : cloudstack> (listVirtualMachines :listall => true).virtualmachine.select{|vm| vm.state == 'Running'}.size
+    : => 15
+
+*** Get all virtualmachine ids and their ip addresses
+
+    : cloudstack> (listVirtualMachines :listall => true).virtualmachine.map{|vm| [vm.id, vm.nic.first.ipaddress]}
+    : => [["00531027-b87d-476c-9259-0d1e79bda74c", "10.10.7.114"],
+    :  ["7c426c8a-ecbd-4d3e-85f2-38d59d2cb6fe", "10.10.1.70"],
+    :  ["cbeadc3b-33ae-48fc-ac0a-0026f8eabb2b", "10.10.1.55"],
+    :  ["7c30c1af-1684-40f3-a60a-a74a70d49291", "10.10.1.92"],
+    :  ["61ff6f4e-8795-49a6-bd5f-5a4ef9fc9650", "10.10.2.238"],
+    :  ["9296e2bf-003f-4d72-bc1f-3829313bad05", "10.10.1.26"]]
+
+** Other useful tips
+   If you feel messy to type commands in foo["bar"] style, just type 'foo.bar'.
+
+   : cloudstack> (listTemplates :templatefilter => "executable")["template"].first["name"]
+   : => "CentOS 5.5(64-bit) no GUI (KVM)"
+   : cloudstack> (listTemplates :templatefilter => "executable").template.first.name
+   : => "CentOS 5.5(64-bit) no GUI (KVM)"
+
+* License
+  The MIT License.
